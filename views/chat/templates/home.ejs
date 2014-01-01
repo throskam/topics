@@ -1,0 +1,71 @@
+
+<div>
+	<input type="text" class="form-control" ng-model="search">
+</div>
+
+<h3><%= __('chat:chats-list.title') %></h3>
+<div class="chats row">
+	<div class="chatty col-lg-3" ng-repeat="chat in app.chats | legitChat | filter:{ title:search }">
+		<div class="thumbnail" ng-click="app.to('/chat/{{ chat.slug }}')">
+			<div class="caption">
+				<p>{{ chat.title }}</p>
+				<p>{{ chat.description }}</p>
+			</div>
+		</div>
+	</div>
+
+	<div class="chatty col-lg-3" ng-click="app.to('/create')" ng-hide="search && search != ''">
+		<div class="thumbnail">
+			<div class="caption">
+				<i class="glyphicon glyphicon-plus"></i>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-lg-6">
+		<div class="panel panel-info">
+			<div class="panel-heading"><%= __('chat:icebreaks-list.title') %></div>
+			<div class="panel-body">
+				<ul class="list-group">
+					<li class="list-group-item" ng-repeat="chat in app.chats | icebreakChat | filter:{ title:search }">
+						<div class="row">
+							<div class="col-lg-10">
+								{{ chat.title }}
+							</div>
+							<div class="col-lg-2">
+								<div class="pull-right">
+									<button class="btn btn-xs btn-default" ng-click="app.revoke(chat.me)"><i class="glyphicon glyphicon-remove"></i></button>
+								</div>
+							</div>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-lg-6">
+		<div class="panel panel-info">
+			<div class="panel-heading"><%= __('chat:invitations-list.title') %></div>
+			<div class="panel-body">
+				<ul class="list-group">
+					<li class="list-group-item" ng-repeat="chat in app.chats | inviteChat | filter:{ title:search }">
+						<div class="row">
+							<div class="col-lg-10">
+								{{ chat.title }}
+							</div>
+							<div class="col-lg-2">
+								<div class="pull-right">
+									<button class="btn btn-xs btn-default" ng-click="app.accept(chat.me)"><%= __('chat:accept.btn') %></button>
+									<button class="btn btn-xs btn-default" ng-click="app.revoke(chat.me)"><i class="glyphicon glyphicon-remove"></i></button>
+								</div>
+							</div>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>

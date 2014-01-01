@@ -1,0 +1,30 @@
+.chatty {
+	padding-top: 20px;
+}
+
+.chatty .thumbnail {
+	height: 100px;
+	cursor: pointer;
+	box-shadow: 2px 2px 5px #2f5473;
+}
+
+.chatty .thumbnail:hover {
+	box-shadow: none;
+}
+
+.chatty.muted .thumbnail {
+	cursor: auto;
+	box-shadow: none;
+}
+
+.chat {
+	margin-top: 10px;
+}
+
+.chats {
+	margin-bottom: 50px;
+}
+
+.tags span {
+	margin: 0 2px;
+}

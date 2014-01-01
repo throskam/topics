@@ -1,0 +1,22 @@
+<div class="page-header">
+	<h1><%= __('home:statistics.title') %></h1>
+
+	<table class="table table-stripped table-bordered">
+		<tr>
+			<th><%= __('home:statistics:users-amount.label') %></th>
+			<td><%= stats.users %></td>
+		</tr>
+		<tr>
+			<th><%= __('home:statistics:users-connected-amount.label') %></th>
+			<td><%= stats.usersConnected %></td>
+		</tr>
+		<tr>
+			<th><%= __('home:statistics:chats-amount.label') %></th>
+			<td><%= stats.chats %></td>
+		</tr>
+		<tr>
+			<th><%= __('home:statistics:messages-amount.label') %></th>
+			<td><%= stats.messages %></td>
+		</tr>
+	</table>
+</div>

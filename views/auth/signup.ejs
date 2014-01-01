@@ -1,0 +1,65 @@
+<div class="col-lg-6 col-lg-offset-3">
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h3 class="panel-title"><%= __('auth:sign-up.title') %></h3>
+		</div>
+		<div class="panel-body">
+			<form method="POST" role="form" class="form-horizontal signup">
+
+				<div class="form-group <%= (error.username ? 'has-error' : '') %>">
+					<label for="username" class="col-lg-4 control-label"><%= __('auth:username.label') %></label>
+					<div class="col-lg-8 ">
+						<input type="text" name="username" value="<%= input.username || '' %>" placeholder="<%= __('auth:username.ph') %>" class="form-control">
+						<% if (error.username) { %>
+							<% for (var i in error.username) { %>
+								<span class="help-block"><%= ___(error.username[i]) %></span>
+							<% } %>
+						<% } %>
+					</div>
+				</div>
+
+				<div class="form-group <%= (error.password ? 'has-error' : '') %>">
+					<label for="password" class="col-lg-4 control-label"><%= __('auth:password.label') %></label>
+					<div class="col-lg-8">
+						<input type="password" name="password" placeholder="<%= __('auth:password.ph') %>" class="form-control">
+						<% if (error.password) { %>
+							<% for (var i in error.password) { %>
+								<span class="help-block"><%= ___(error.password[i]) %></span>
+							<% } %>
+						<% } %>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="password" class="col-lg-4 control-label"><%= __('auth:password-confirmation.label') %></label>
+					<div class="col-lg-8">
+						<input type="password" name="password_confirmation" placeholder="<%= __('auth:password-confirmation.ph') %>" class="form-control">
+						<span class="help-block" style="display:none"><%= __('auth:password-confirmation.error') %></span>
+					</div>
+				</div>
+
+				<div class="form-group <%= (error.email ? 'has-error' : '') %>">
+					<label for="email" class="col-lg-4 control-label"><%= __('auth:email.label') %></label>
+					<div class="col-lg-8">
+						<input type="email" name="email" value="<%= input.email || '' %>" placeholder="<%= __('auth:email.ph') %>" class="form-control">
+						<% if (error.email) { %>
+							<% for (var i in error.email) { %>
+								<span class="help-block"><%= ___(error.email[i]) %></span>
+							<% } %>
+						<% } %>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<div class="col-lg-8 col-lg-offset-4">
+						<button type="submit" class="btn btn-default"><%= __('auth:sign-up.btn') %></button>
+						<a href="/auth/signin<%= query ? '?' + query : '' %>" class="btn btn-link"><%= __('auth:already-sign-up.goto') %></a>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<% register('jquery', '/js/vendor/jquery.js'); %>
+<% register('signup', '/js/signup.js'); %>

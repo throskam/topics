@@ -1,0 +1,224 @@
+
+<div class="row">
+	<div class="col-lg-12">
+	<ul class="nav nav-pills">
+		<li><a href ng-click="app.to('/')"><i class="glyphicon glyphicon-home"></i> <%= __('chat:home.goto') %></a></li>
+		<li ng-repeat="chat in app.chats | connectedChat" ng-class="{ active: app.chat.slug == chat.slug }"><a href ng-click="app.to('/chat/{{ chat.slug }}')">{{ chat.title }}</a></li>
+	</ul>
+	</div>
+</div>
+
+<div class="chat panel panel-default">
+
+	<div class="panel-heading">
+		<div class="row">
+			<div class="col-lg-9">
+				<h4>{{ app.chat.title }} <small>{{ app.chat.description }}</small></h4>
+			</div>
+			<div class="col-lg-3">
+				<div class="pull-right">
+					<div class="btn-group">
+						<button class="btn btn-sm btn-primary" ng-click="settings = !settings" ng-class="{ active: settings }" ng-show="app.isStaff()">
+							<i class="glyphicon glyphicon-cog"></i>
+						</button>
+						<button class="btn btn-sm btn-warning" ng-click="app.disconnect(app.chat);">
+							<i class="glyphicon glyphicon-off"></i>
+						</button>
+						<button class="btn btn-sm btn-danger" ng-click="app.leave(app.chat);">
+							<i class="glyphicon glyphicon-remove"></i>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="panel-body" ng-hide="settings">
+		<div class="row">
+
+			<div class="col-lg-2">
+				<div class="participants">
+					<div ng-repeat="participant in app.chat.participants | legitParticipant | filter:{ connected: true } | orderBy:username">
+						<span class="label label-success" ng-hide="!participant.connected"><i class="glyphicon glyphicon-cloud"></i></span>
+						<a href user="{{ participant.user }}">{{ participant.user.username }}</a>
+					</div>
+
+					<div ng-repeat="participant in app.chat.participants | legitParticipant | filter:{ connected: false } | orderBy:username">
+						<span class="label label-default" ng-hide="participant.connected"><i class="glyphicon glyphicon-cloud"></i></span>
+						{{ participant.user.username }}
+					</div>
+				</div>
+			</div>
+
+			<div class="col-lg-8">
+				<div ng-repeat="message in app.chat.messages" message="{{ message }}"></div>
+
+				<form ng-hide="app.chat.me.type == 'muted'">
+					<div class="form-group {{ app.errors.content.length > 0 ? 'has-error' : '' }}" >
+						<div class="input-group">
+							<input type="text" class="form-control input-sm" ng-model="newMessage.content" />
+							<span class="input-group-btn">
+								<button class="btn btn-sm btn-default" ng-click="app.send(app.chat, newMessage)"><%= __('chat:send.btn') %></button>
+							</span>
+						</div>
+						<span class="help-block" ng-repeat="error in app.errors.content">{{ error }}</span>
+					</div>
+				</form>
+			</div>
+
+			<div class="col-lg-2">
+				<div class="topics">
+					<div ng-repeat="topic in app.chat.topics"> {{ topic.slug }} </div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="panel-body" ng-show="settings">
+
+		<div class="row">
+			<div class="col-lg-10 col-lg-offset-1">
+				<div class="panel panel-info">
+					<div class="panel-heading"><%= __('chat:topic-list.title') %></div>
+					<div class="panel-body">
+						<ul class="list-group">
+							<li class="list-group-item" ng-repeat="topic in app.chat.topics">
+								<div class="row">
+									<div class="col-lg-10"> {{ topic.slug }} </div>
+									<div class="col-lg-2">
+										<div class="pull-right">
+											<!-- <div class="btn-group">
+												<button class="btn btn-xs btn-default" ng-click="app.untopic(topic);"><i class="glyphicon glyphicon-remove"></i></button>
+											</div> -->
+										</div>
+									</div>
+								</div>
+							</li>
+						</ul>
+
+						<form class="form-horizontal">
+							<div class="col-lg-6 col-lg-offset-3">
+								<div class="form-group {{ app.errors.slug.length > 0 ? 'has-error' : '' }}">
+									<label for="slug" class="col-lg-4 control-label"><%= __('topic:slug.label') %></label>
+									<div class="col-lg-8">
+										<input type="text" name="slug" placeholder="<%= __('topic:slug.ph') %>" class="form-control" ng-model="newTopic.slug">
+										<span class="help-block" ng-repeat="error in app.errors.slug">{{ error }}</span>
+									</div>
+								</div>
+
+								<div class="form-group {{ app.errors.title.length > 0 ? 'has-error' : '' }}">
+									<label for="title" class="col-lg-4 control-label"><%= __('topic:title.label') %></label>
+									<div class="col-lg-8">
+										<input type="text" name="title" placeholder="<%= __('topic:title.ph') %>" class="form-control" ng-model="newTopic.title">
+										<span class="help-block" ng-repeat="error in app.errors.title">{{ error }}</span>
+									</div>
+								</div>
+
+								<div class="form-group {{ app.errors.description.length > 0 ? 'has-error' : '' }}">
+									<label for="description" class="col-lg-4 control-label"><%= __('topic:description.label') %></label>
+									<div class="col-lg-8">
+										<input type="text" name="description" placeholder="<%= __('topic:description.ph') %>" class="form-control" ng-model="newTopic.description">
+										<span class="help-block" ng-repeat="error in app.errors.description">{{ error }}</span>
+									</div>
+								</div>
+
+								<div class="form-group">
+									<div class="col-lg-8 col-lg-offset-4">
+										<button type="submit" class="btn btn-default" ng-click="app.topic(app.chat, newTopic)"><%= __('topic:create.btn') %></button>
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-lg-10 col-lg-offset-1">
+				<div class="panel panel-info">
+					<div class="panel-heading"><%= __('chat:participants-list.title') %></div>
+					<div class="panel-body">
+						<ul class="list-group">
+							<li class="list-group-item" ng-repeat="participant in app.chat.participants | legitParticipant">
+								<div class="row">
+									<div class="col-lg-8"> {{ participant.user.username }} </div>
+									<div class="col-lg-4">
+										<div class="pull-right">
+											<div class="btn-group" ng-show="app.isSuperiorTo(participant);">
+												<button class="btn btn-xs btn-default" ng-click="app.promote(participant, 'mute');" ng-class="{ active: participant.type == 'mute' }"><i class="glyphicon glyphicon-ban-circle"></i></button>
+												<button class="btn btn-xs btn-default" ng-click="app.promote(participant, 'voice');" ng-class="{ active: participant.type == 'voice' }"><i class="glyphicon glyphicon-user"></i></button>
+												<button class="btn btn-xs btn-default" ng-click="app.promote(participant, 'moderator');" ng-class="{ active: participant.type == 'moderator' }"><i class="glyphicon glyphicon-user text-primary"></i></button>
+												<button class="btn btn-xs btn-default" ng-click="app.promote(participant, 'admin');" ng-class="{ active: participant.type == 'admin' }"><i class="glyphicon glyphicon-user text-warning"></i></button>
+												<button class="btn btn-xs btn-default" ng-click="app.promote(participant, 'creator');" ng-class="{ active: participant.type == 'creator' }"><i class="glyphicon glyphicon-user text-danger"></i></button>
+												<button class="btn btn-xs btn-danger" ng-click="app.revoke(participant);"><i class="glyphicon glyphicon-remove"></i></button>
+											</div>
+										</div>
+									</div>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-lg-10 col-lg-offset-1">
+				<div class="panel panel-info">
+					<div class="panel-heading"><%= __('chat:icebreaks-waiting-list.title') %></div>
+					<div class="panel-body">
+						<ul class="list-group">
+							<li class="list-group-item" ng-repeat="participant in app.chat.participants | icebreakParticipant">
+								<div class="row">
+									<div class="col-lg-10"> {{ participant.user.username }} </div>
+									<div class="col-lg-2">
+										<div class="pull-right">
+											<button class="btn btn-xs btn-default" ng-click="app.accept(participant)"><%= __('chat:accept.btn') %></button>
+											<button class="btn btn-xs btn-default" ng-click="app.revoke(participant)"><i class="glyphicon glyphicon-remove"></i></button>
+										</div>
+									</div>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-lg-10 col-lg-offset-1">
+				<div class="panel panel-info">
+					<div class="panel-heading"><%= __('chat:invitations-waiting-list.title') %></div>
+					<div class="panel-body">
+
+						<ul class="list-group">
+							<li class="list-group-item" ng-repeat="participant in app.chat.participants | inviteParticipant">
+								<div class="row">
+									<div class="col-lg-10"> {{ participant.user.username }} </div>
+									<div class="col-lg-2">
+										<div class="pull-right">
+											<button class="btn btn-xs btn-default" ng-click="app.revoke(participant)"><i class="glyphicon glyphicon-remove"></i></button>
+										</div>
+									</div>
+								</div>
+							</li>
+						</ul>
+
+						<form>
+							<div class="form-group {{ app.errors.length > 0 ? 'has-error' : '' }}" >
+								<div class="input-group">
+									<input type="text" class="form-control input-sm" ng-model="newParticipant" />
+									<span class="input-group-btn">
+										<button class="btn btn-sm btn-default" ng-click="app.invite(app.chat, newParticipant)"><%= __('chat:invite.btn') %></button>
+									</span>
+								</div>
+								<span class="help-block" ng-repeat="error in app.errors.errors">{{ error }}</span>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

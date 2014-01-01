@@ -1,0 +1,33 @@
+<div class="col-lg-6 col-lg-offset-3">
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h3 class="panel-title"><%= __('auth:sign-in.title') %></h3>
+		</div>
+		<div class="panel-body">
+			<form method="POST" role="form" class="form-horizontal">
+
+				<div class="form-group">
+					<label for="username" class="col-lg-4 control-label"><%= __('auth:username.label') %></label>
+					<div class="col-lg-8">
+						<input type="text" name="username" value="<%= input.username || '' %>" placeholder="<%= __('auth:username.ph') %>" class="form-control">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="password" class="col-lg-4 control-label"><%= __('auth:password.label') %></label>
+					<div class="col-lg-8">
+						<input type="password" name="password" placeholder="<%= __('auth:password.ph') %>" class="form-control">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<div class="col-lg-8 col-lg-offset-4">
+						<button type="submit" class="btn btn-default"><%= __('auth:sign-in.btn') %></button>
+						<a href="/auth/signup<%= query ? '?' + query : '' %>" class="btn btn-link"><%= __('auth:not-sign-up.goto') %></a>
+					</div>
+				</div>
+
+			</form>
+		</div>
+	</div>
+</div>

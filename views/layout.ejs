@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Topics</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+		<link rel="stylesheet" href="/styles/bootstrap.css">
+		<link rel="stylesheet" href="/styles/bootstrap-theme.css">
+		<link rel="stylesheet" href="/styles/style.css">
+	</head>
+
+	<body>
+		<header>
+			<nav class="navbar navbar-default" role="navigation">
+				<div class="container">
+					<div class="navbar-header">
+						<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".menu">
+							<span class="sr-only"><%= __('home:toggle-navigation.btn') %></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+						</button>
+						<a class="navbar-brand" href="/">Topics</a>
+					</div>
+
+					<div class="collapse navbar-collapse menu">
+						<ul class="nav navbar-nav">
+							<li><a href="/news"><%= __('home:news.goto') %></a></li>
+							<li><a href="/statistics"><%= __('home:statistics.goto') %></a></li>
+							<li><a href="/contact"><%= __('home:contact.goto') %></a></li>
+						</ul>
+
+						<ul class="nav navbar-nav navbar-right">
+							<% if (authenticated) { %>
+								<li><a href="/user/profile"><%= __('home:profile.goto') %></a></li>
+								<li><a href="/chat/"><%= __('home:chat.goto') %></a></li>
+								<li><a href="/user/settings"><%= __('home:settings.goto') %></a></li>
+								<li><a href="/auth/signout"><%= __('auth:sign-out.goto') %></a></li>
+							<% } else { %>
+								<li><a href="/auth/signin"><%= __('auth:sign-in.goto') %></a></li>
+								<li><a href="/auth/signup"><%= __('auth:sign-up.goto') %></a></li>
+							<% } %>
+						</ul>
+					</div>
+				</div>
+			</nav>
+		</header>
+
+		<div class="container">
+			<div class="flash">
+				<% for (var i in successes) { %>
+					<div class="alert alert-success alert-dismissable">
+						<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+						<%= ___(successes[i]) %>
+					</div>
+				<% } %>
+
+				<% for (var i in notices) { %>
+					<div class="alert alert-info alert-dismissable">
+						<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+						<%= ___(notices[i]) %>
+					</div>
+				<% } %>
+
+				<% for (var i in warnings) { %>
+					<div class="alert alert-warning alert-dismissable">
+						<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+						<%= ___(warnings[i]) %>
+					</div>
+				<% } %>
+
+				<% for (var i in dangers) { %>
+					<div class="alert alert-danger alert-dismissable">
+						<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+						<%= ___(dangers[i]) %>
+					</div>
+				<% } %>
+			</div>
+		</div>
+
+		<div class="container"><%- body %></div>
+
+		<footer>
+			<hr>
+			<div class="container">
+				<div class="pull-right">
+					<p class="text-muted">lift by <a href="http://sailsjs.org/">Sails.js</a></p>
+					<!-- <img class="logo" src="http://sailsjs.org/images/sails-logo.jpg"> -->
+				</div>
+			</div>
+		</footer>
+
+		<% register('jquery', '/js/vendor/jquery.js'); %>
+		<% register('bootstrap', '/js/vendor/bootstrap.js'); %>
+
+		<% for(i in res.locals.scripts) { %>
+			<script type="text/javascript" src="<%= res.locals.scripts[i] %>"></script>
+		<% } %>
+	</body>
+</html>

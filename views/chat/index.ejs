@@ -1,0 +1,20 @@
+<div class="page-header">
+	<h1><%= __('chat:home.title') %></h1>
+</div>
+
+<div ng-app="App" ng-cloak>
+	<ng-view></ng-view>
+</div>
+
+<%
+	register('jquery', '/js/vendor/jquery.js');
+	register('_', '/js/vendor/lodash.js');
+	register('async', '/js/vendor/async.js');
+	register('socket_io', '/js/socket.io.js');
+	register('angular', '/js/vendor/angular.js');
+	register('angular_route', '/js/vendor/angular-route.js');
+	register('moment', '/js/vendor/moment.js');
+	register('chat', '/js/app.js');
+%>
+
+
