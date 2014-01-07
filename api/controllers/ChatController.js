@@ -24,8 +24,12 @@ module.exports = {
 		res.view('chat/templates/500', { layout: null });
 	},
 
-	getUser: function (req, res) {
-		res.view('chat/templates/partials/user', { layout: null, user: req.session.user });
+	getParticipant: function (req, res) {
+		res.view('chat/templates/partials/participant', { layout: null });
+	},
+
+	getTopic: function (req, res) {
+		res.view('chat/templates/partials/topic', { layout: null });
 	},
 
 	getMessage: function (req, res) {
@@ -48,9 +52,9 @@ module.exports = {
 				Chat.findOneById(participant.chat).done(function (err, chat) {
 					if (err) return res.serverError(err);
 
-					if (chat) {
+					if (chat && participant.isMetaMember()) {
 						chats.push(chat);
-						if (participant.isHigherThanOrEqual('member')) Chat.notify(req.socket, chat);
+						if (participant.isMember()) Chat.notify(req.socket, chat);
 					}
 
 					cb();
@@ -64,9 +68,6 @@ module.exports = {
 	},
 
 	create: function (req, res) {
-		// Set ownership
-		req.body.owner = req.session.user.id;
-
 		Chat.create(req.body).done(function (err, chat) {
 			if (err) return res.serverError(err);
 
@@ -84,17 +85,19 @@ module.exports = {
 				if (err) return res.serverError(err);
 				if (!chat) return res.badRequest('home:participant-not-found.error');
 
-				if (participant.isHigherThanOrEqual('member')) Chat.notify(req.socket, chat);
+				if (participant.isHigherThanOrEqual('mute')) Chat.notify(req.socket, chat);
 				return res.json(chat);
 			});
 		});
 	},
 
 	update: function (req, res) {
+		// TODO: chat update
 		return res.serverError('Not Yet Implemented');
 	},
 
 	destroy: function (req, res) {
+		// TODO: chat destroy
 		return res.serverError('Not Yet Implemented');
 	},
 
@@ -132,19 +135,63 @@ module.exports = {
 
 			Participant.findOne({ user: req.session.user.id, chat: chat.id }).done(function (err, participant) {
 				if (err) return res.serverError(err);
-				if (participant) return res.badRequest(participant.type == 'icebreak' ? 'chat:icebreak-duplicate.error' : 'chat:participant-duplicate.error');
 
-				Participant.create({
-					user: req.session.user.id,
-					chat: chat.id,
-					type: 'icebreak',
-					connected: false
-				}).done(function (err, newParticipant) {
-					if (err) return res.serverError(err);
+				if (participant) {
+					if (participant.isMetaMember()) return res.badRequest(participant.isIcebreak() ? 'chat:icebreak-duplicate.error' : 'chat:participant-duplicate.error');
+					if (participant.isRevoked()) return res.badRequest('chat:icebreak-revoke.error');
 
-					Chat.publishIcebreak(newParticipant);
-					return res.json(newParticipant);
-				});
+					if (chat.restricted) {
+						participant.type = 'icebreak';
+						participant.save(function (err) {
+							if (err) return res.serverError(err);
+
+							Chat.publishIcebreak(participant);
+							return res.json(participant);
+						});
+					}
+
+					else {
+						participant.type = 'voice';
+						participant.save(function (err) {
+							if (err) return res.serverError(err);
+
+							Chat.publishIcebreak(participant);
+							Participant.publishJoin(participant);
+							return res.json(participant);
+						});
+					}
+				}
+
+				else {
+					if (chat.restricted) {
+						Participant.create({
+							user: req.session.user.id,
+							chat: chat.id,
+							type: 'icebreak',
+							connected: false
+						}).done(function (err, newParticipant) {
+							if (err) return res.serverError(err);
+
+							Chat.publishIcebreak(newParticipant);
+							return res.json(newParticipant);
+						});
+					}
+
+					else {
+						Participant.create({
+							user: req.session.user.id,
+							chat: chat.id,
+							type: 'voice',
+							connected: false
+						}).done(function (err, newParticipant) {
+							if (err) return res.serverError(err);
+
+							Chat.publishIcebreak(newParticipant);
+							Participant.publishJoin(newParticipant);
+							return res.json(newParticipant);
+						});
+					}
+				}
 			});
 		});
 	},
@@ -162,16 +209,31 @@ module.exports = {
 					if (err) return res.serverError(err);
 
 					if (participant) {
-						if (participant.type != 'icebreak') return res.badRequest('chat:participant-duplicate.error');
+						if (participant.isMetaMember()) {
+							if (participant.isIcebreak()) {
+								participant.type = 'voice';
+								participant.save(function (err) {
+									if (err) return res.serverError(err);
 
-						participant.type = 'voice';
+									Participant.publishJoin(participant);
+									return res.json(participant);
+								});
+							}
 
-						participant.save(function (err) {
-							if (err) return res.serverError(err);
+							else {
+								return res.badRequest('chat:participant-duplicate.error');
+							}
+						}
 
-							Participant.publishJoin(participant);
-							return res.json(participant);
-						});
+						else {
+							participant.type = 'invite';
+							participant.save(function (err) {
+								if (err) return res.serverError(err);
+
+								Chat.publishInvite(participant);
+								return res.json(participant);
+							});
+						}
 					}
 
 					else {

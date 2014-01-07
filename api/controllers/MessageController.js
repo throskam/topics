@@ -9,9 +9,6 @@ module.exports = {
 	},
 
 	create: function (req, res) {
-		// Set ownership
-		req.body.owner = req.session.user.id;
-
 		Message.create(req.body).done(function (err, message) {
 			if (err) return res.serverError(err);
 

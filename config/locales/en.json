@@ -88,5 +88,6 @@
 	"home:participant-not-found.error": "The participant does not exist.",
 	"chat:participant-duplicate.error": "The user is already a participant in this chat.",
 	"chat:icebreak-duplicate.error": "The user is already trying to break the ice in this chat.",
-	"chat:participant-not-invited.error": "The user is not invited to this chat, maybe try to break the ice ?"
+	"chat:participant-not-invited.error": "The user is not invited to this chat, maybe try to break the ice ?",
+	"chat:icebreak-revoke.error": "The user has been revoked and therefore cannot make an icebreak to the same chat."
 }

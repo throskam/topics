@@ -26,7 +26,8 @@ module.exports.routes = {
 	'get    /chat/templates/create'                   : 'ChatController.getCreate',
 	'get    /chat/templates/read'                     : 'ChatController.getRead',
 	'get    /chat/templates/500'                      : 'ChatController.get500',
-	'get    /chat/templates/partials/user'            : 'ChatController.getUser',
+	'get    /chat/templates/partials/participant'     : 'ChatController.getParticipant',
+	'get    /chat/templates/partials/topic'           : 'ChatController.getTopic',
 	'get    /chat/templates/partials/message'         : 'ChatController.getMessage',
 
 	/*************************************************************************/
@@ -64,8 +65,8 @@ module.exports.routes = {
 	'put    /api/participant/:participant/leave'      : 'ParticipantController.leave',
 	'put    /api/participant/:participant/connect'    : 'ParticipantController.connect',
 	'put    /api/participant/:participant/disconnect' : 'ParticipantController.disconnect',
-	'put    /api/participant/:participant/revoke'     : 'ParticipantController.revoke',
 	'put    /api/participant/:participant/promote'    : 'ParticipantController.promote',
+	'put    /api/participant/:participant/revoke'     : 'ParticipantController.revoke',
 
 	'get    /api/topic'                               : 'TopicController.find',
 	'post   /api/topic'                               : 'TopicController.create',

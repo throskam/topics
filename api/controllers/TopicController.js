@@ -28,7 +28,14 @@ module.exports = {
 	},
 
 	destroy: function (req, res) {
-		// TODO: topic destroy
-		return res.serverError('Not Yet Implemented');
+		Topic.findOneById(req.param('topic')).done(function (err, topic) {
+			if (err) return serverError(err);
+
+			topic.destroy(function (err) {
+				if (err) return serverError(err);
+				Topic.publishDestroy(topic.id);
+				return res.json(topic);
+			});
+		});
 	},
 };

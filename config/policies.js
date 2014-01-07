@@ -46,7 +46,8 @@ module.exports.policies = {
 		'getCreate': ['isAuthenticated', 'locals'],
 		'getRead': ['isAuthenticated', 'locals'],
 		'get500': ['isAuthenticated', 'locals'],
-		'getUser': ['isAuthenticated', 'locals'],
+		'getParticipant': ['isAuthenticated', 'locals'],
+		'getTopic': ['isAuthenticated', 'locals'],
 		'getMessage': ['isAuthenticated', 'locals'],
 
 		'find': ['isAuthenticated'],
@@ -76,8 +77,8 @@ module.exports.policies = {
 		'leave': ['isAuthenticated'],
 		'connect': ['isAuthenticated'],
 		'disconnect': ['isAuthenticated'],
-		'revoke': ['isAuthenticated'],
 		'promote': ['isAuthenticated'],
+		'revoke': ['isAuthenticated'],
 	},
 
 	TopicController: {

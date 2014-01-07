@@ -5,7 +5,7 @@ module.exports = {
 	schema: true,
 
 	attributes: {
-		owner: {
+		user: {
 			type: 'integer',
 			required: true,
 		},
@@ -40,8 +40,8 @@ module.exports = {
 	},
 
 	publishCreate: function (values) {
-		// Only the owner is introduced to the new chat.
-		Socket.introduce(this.room(values.id), Socket.userToSockets(values.owner, this.subscribers()));
+		// Only the user is introduced to the new chat.
+		Socket.introduce(this.room(values.id), Socket.userToSockets(values.user, this.subscribers()));
 		Socket.publish(Formatter.eventify('chat:create', values), this.subscribers(values.id));
 	},
 
@@ -52,31 +52,25 @@ module.exports = {
 		}), this.subscribers(id));
 	},
 
-	publishDestroy: function (id) {
-		Socket.publish(Formatter.eventify('chat:destroy', { id: id }), this.subscribers(id));
-		Socket.obituary(this.room(id), this.subscribers(id));
+	publishIcebreak: function (values) {
+		Socket.introduce(Participant.room(values.id), this.subscribers(values.chat));
+
+		// Manually add the invited user since he's not in the chat room yet.
+		Socket.introduce(Participant.room(values.id), Socket.userToSockets(values.user, this.subscribers()));
+		Socket.publish(Formatter.eventify('chat:icebreak', values), Participant.subscribers(values.id));
 	},
 
-	publishIcebreak: function (participant) {
-		// Sockets subscribe to the concerned chat.
-		var sockets = this.subscribers(participant.chat);
+	publishInvite: function (values) {
+		Socket.introduce(Participant.room(values.id), this.subscribers(values.chat));
 
-		// Since the participant is not part of the chat yet, he has to be manually added to the targeted sockets.
-		var targets = Socket.userToSockets(participant.user, this.subscribers());
-		_(targets).each(function (target) { sockets.push(target); });
-
-		Socket.publish(Formatter.eventify('chat:icebreak', participant), sockets);
+		// Manually add the invited user since he's not in the chat room yet.
+		Socket.introduce(Participant.room(values.id), Socket.userToSockets(values.user, this.subscribers()));
+		Socket.publish(Formatter.eventify('chat:invite', values), Participant.subscribers(values.id));
 	},
 
-	publishInvite: function (participant) {
-		// Sockets subscribe to the concerned chat.
-		var sockets = this.subscribers(participant.chat);
-
-		// Since the participant is not part of the chat yet, he has to be manually added to the targeted sockets.
-		var targets = Socket.userToSockets(participant.user, this.subscribers());
-		_(targets).each(function (target) { sockets.push(target); });
-
-		Socket.publish(Formatter.eventify('chat:invite', participant), sockets);
+	publishDestroy: function (values) {
+		Socket.publish(Formatter.eventify('chat:destroy', values), this.subscribers(values.id));
+		Socket.obituary(this.room(values.id), this.subscribers(values.id));
 	},
 
 	beforeValidation: function (values, cb) {
@@ -86,7 +80,6 @@ module.exports = {
 
 			Chat.findOneBySlug(hash).done(function (err, row) {
 				if (err) return cb(err);
-
 				if (row) return hashing(hash);
 
 				values.slug = hash;
@@ -99,9 +92,9 @@ module.exports = {
 	},
 
 	afterCreate: function (values, cb) {
-		// Immediatly create the owner participant correspondant.
+		// Immediatly create the user participant correspondant.
 		Participant.create({
-			user: values.owner,
+			user: values.user,
 			chat: values.id,
 			type: 'creator',
 			connected: false
@@ -113,5 +106,6 @@ module.exports = {
 
 	beforeDestroy: function (criteria, cb) {
 		// TODO: before destroy
+		cb();
 	}
 };

@@ -9,7 +9,7 @@ module.exports = {
 			required: true
 		},
 
-		owner: {
+		participant: {
 			type: 'integer',
 			required: true
 		},
@@ -25,10 +25,7 @@ module.exports = {
 	},
 
 	publishCreate: function (values) {
-		// Sockets attached to the message's chat.
-		var sockets = Chat.subscribers(values.chat);
-
-		Socket.introduce(this.room(values.id), sockets);
+		Socket.introduce(this.room(values.id), Chat.subscribers(values.chat));
 		Socket.publish(Formatter.eventify('message:create', values), this.subscribers(values.id));
 	},
 
@@ -39,9 +36,9 @@ module.exports = {
 		}), this.subscribers(id));
 	},
 
-	publishDestroy: function (id) {
-		Socket.publish(Formatter.eventify('message:destroy', { id: id }), this.subscribers(id));
-		Socket.obituary(this.room(id), this.subscribers(id));
+	publishDestroy: function (values) {
+		Socket.publish(Formatter.eventify('message:destroy', values), this.subscribers(values.id));
+		Socket.obituary(this.room(values.id), this.subscribers(values.id));
 	},
 
 	afterCreate: function (values, cb) {
@@ -77,42 +74,60 @@ module.exports = {
 		users = _.uniq(users);
 		topics = _.uniq(topics);
 
-		// create recipients
-		for (var i in users) {
-			User.findOneByUsername(users[i]).done(function (err, user) {
-				if (err) return cb(err);
+		async.parallel([
+			function (done) {
+				async.each(users, function (item, next) {
+					User.findOneByUsername(item).done(function (err, user) {
+						if (err) return next(err);
+						if (!user) return next();
 
-				if (!user) return;
+						Participant.findOne({ user: user.id, chat: values.chat }).done(function (err, participant) {
+							if (err) return next(err);
+							if (!participant) return next();
 
-				Recipient.create({
-					message: values.id,
-					user: user.id
-				}).done(function (err, recipient) {
-					if (err) return cb(err);
+							Recipient.create({
+								message: values.id,
+								participant: participant.id
+							}).done(function (err, recipient) {
+								if (err) return next(err);
+								next();
+							});
+						});
+					});
+				}, function (err) {
+					if (err) return done(err);
+					done();
 				});
-			});
-		}
+			},
+			function (done) {
+				async.each(topics, function (item, next) {
+					Topic.findOne({
+						slug: item,
+						chat: values.chat
+					}).done(function (err, topic) {
+						if (err) return next(err);
+						if (!topic) return next();
 
-		// create subjects
-		for (var i in topics) {
-			Topic.findOne({
-				slug: topics[i],
-				chat: values.chat
-			}).done(function (err, topic) {
-				if (err) return cb(err);
+						Subject.create({
+							message: values.id,
+							topic: topic.id
+						}).done(function (err, subject) {
+							if (err) return next(err);
+							next();
+						});
 
-				if (!topic) return;
-
-				Subject.create({
-					message: values.id,
-					topic: topic.id
-				}).done(function (err, subject) {
-					if (err) return cb(err);
+					});
+				}, function (err) {
+					if (err) return done(err);
+					done();
 				});
-			});
-		}
+			}
+		], function (err, results) {
+			// TODO: remove the currently create message ?
+			if (err) return cb(err);
+			cb();
+		});
 
-		cb();
 	},
 
 	beforeDestroy: function (criteria, cb) {

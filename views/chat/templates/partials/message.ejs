@@ -1,12 +1,13 @@
 <blockquote>
 	<div class="pull-right tags">
-		<span ng-repeat="recipient in message.recipients" class="label label-info">{{ recipient.user.username }}</span>
-		<span ng-repeat="subject in message.subjects" class="label label-default">{{ subject.topic.slug }}</span>
+		<span ng-repeat="recipient in message.recipients" participant="recipient.participant"></span>
+		<span ng-repeat="subject in message.subjects" topic="subject.topic"></span>
 	</div>
+
 	<p>{{ message.content }}</p>
 	<small>
 		<i class="glyphicon glyphicon-user"></i>
-		<cite>{{ message.owner.username }}</cite>
+		<cite>{{ message.participant.user.username }}</cite>
 		<i class="glyphicon glyphicon-time"></i>
 		<date format="<%= user.dateFormat %>" time="{{ message.createdAt }}" refresh="true"></date>
 	</small>
