@@ -51,6 +51,10 @@ module.exports = {
 			return this.isHigherThanOrEqual('mute');
 		},
 
+		isStaff: function () {
+			return this.isHigherThanOrEqual('moderator');
+		},
+
 		isHigherThan: function (type) {
 			return _.indexOf(this.types(), type) < _.indexOf(this.types(), this.type);
 		},

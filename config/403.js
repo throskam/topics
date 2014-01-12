@@ -27,7 +27,7 @@ module.exports[403] = function forbidden(message, req, res) {
 
 	// Optional message
 	if (message) {
-		result.message = res.i18n(message);
+		result.message = Formatter.jsonify(message, res.i18n);
 	}
 
 	// If the user-agent wants a JSON response, send json

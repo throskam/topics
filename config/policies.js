@@ -28,11 +28,11 @@ module.exports.policies = {
 		'getSettings': ['isAuthenticated', 'locals'],
 		'postSettings': ['isAuthenticated'],
 
-		'find': ['isAuthenticated'],
-		'create': ['isAuthenticated'],
+		'find': ['isAuthenticated', 'notYetImplemented'],
+		'create': ['isAuthenticated', 'notYetImplemented'],
 		'read': ['isAuthenticated'],
-		'update': ['isAuthenticated'],
-		'destroy': ['isAuthenticated'],
+		'update': ['isAuthenticated', 'notYetImplemented'],
+		'destroy': ['isAuthenticated', 'notYetImplemented'],
 
 		'me': ['isAuthenticated']
 	},
@@ -52,75 +52,75 @@ module.exports.policies = {
 
 		'find': ['isAuthenticated'],
 		'create': ['isAuthenticated'],
-		'read': ['isAuthenticated'],
-		'update': ['isAuthenticated'],
-		'destroy': ['isAuthenticated'],
+		'read': ['isAuthenticated', 'permissions'],
+		'update': ['isAuthenticated', 'notYetImplemented'],
+		'destroy': ['isAuthenticated', 'notYetImplemented'],
 
-		'participants': ['isAuthenticated'],
-		'topics': ['isAuthenticated'],
-		'messages': ['isAuthenticated'],
+		'participants': ['isAuthenticated', 'permissions'],
+		'topics': ['isAuthenticated', 'permissions'],
+		'messages': ['isAuthenticated', 'permissions'],
 
 		'icebreak': ['isAuthenticated'],
-		'invite': ['isAuthenticated'],
+		'invite': ['isAuthenticated', 'permissions'],
 	},
 
 	ParticipantController: {
 		'*': false,
 
-		'find': ['isAuthenticated'],
-		'create': ['isAuthenticated'],
-		'read': ['isAuthenticated'],
-		'update': ['isAuthenticated'],
-		'destroy': ['isAuthenticated'],
+		'find': ['isAuthenticated', 'notYetImplemented'],
+		'create': ['isAuthenticated', 'notYetImplemented'],
+		'read': ['isAuthenticated', 'permissions'],
+		'update': ['isAuthenticated', 'notYetImplemented'],
+		'destroy': ['isAuthenticated', 'notYetImplemented'],
 
-		'join': ['isAuthenticated'],
-		'leave': ['isAuthenticated'],
-		'connect': ['isAuthenticated'],
-		'disconnect': ['isAuthenticated'],
-		'promote': ['isAuthenticated'],
-		'revoke': ['isAuthenticated'],
+		'join': ['isAuthenticated', 'permissions' ],
+		'leave': ['isAuthenticated', 'permissions'],
+		'connect': ['isAuthenticated', 'permissions'],
+		'disconnect': ['isAuthenticated', 'permissions'],
+		'promote': ['isAuthenticated', 'permissions'],
+		'revoke': ['isAuthenticated', 'permissions'],
 	},
 
 	TopicController: {
 		'*': false,
 
-		'find': ['isAuthenticated'],
-		'create': ['isAuthenticated'],
-		'read': ['isAuthenticated'],
-		'update': ['isAuthenticated'],
-		'destroy': ['isAuthenticated'],
+		'find': ['isAuthenticated', 'notYetImplemented'],
+		'create': ['isAuthenticated', 'permissions'],
+		'read': ['isAuthenticated', 'notYetImplemented'],
+		'update': ['isAuthenticated', 'notYetImplemented'],
+		'destroy': ['isAuthenticated', 'permissions'],
 	},
 
 	MessageController: {
 		'*': false,
 
-		'find': ['isAuthenticated'],
-		'create': ['isAuthenticated'],
-		'read': ['isAuthenticated'],
-		'update': ['isAuthenticated'],
-		'destroy': ['isAuthenticated'],
+		'find': ['isAuthenticated', 'notYetImplemented'],
+		'create': ['isAuthenticated', 'permissions'],
+		'read': ['isAuthenticated', 'notYetImplemented'],
+		'update': ['isAuthenticated', 'notYetImplemented'],
+		'destroy': ['isAuthenticated', 'notYetImplemented'],
 
-		'subjects': ['isAuthenticated'],
-		'recipients': ['isAuthenticated'],
+		'subjects': ['isAuthenticated', 'permissions'],
+		'recipients': ['isAuthenticated', 'permissions'],
 	},
 
 	RecipientController: {
 		'*': false,
 
-		'find': ['isAuthenticated'],
-		'create': ['isAuthenticated'],
-		'read': ['isAuthenticated'],
-		'update': ['isAuthenticated'],
-		'destroy': ['isAuthenticated'],
+		'find': ['isAuthenticated', 'notYetImplemented'],
+		'create': ['isAuthenticated', 'notYetImplemented'],
+		'read': ['isAuthenticated', 'notYetImplemented'],
+		'update': ['isAuthenticated', 'notYetImplemented'],
+		'destroy': ['isAuthenticated', 'notYetImplemented'],
 	},
 
 	SubjectController: {
 		'*': false,
 
-		'find': ['isAuthenticated'],
-		'create': ['isAuthenticated'],
-		'read': ['isAuthenticated'],
-		'update': ['isAuthenticated'],
-		'destroy': ['isAuthenticated'],
+		'find': ['isAuthenticated', 'notYetImplemented'],
+		'create': ['isAuthenticated', 'notYetImplemented'],
+		'read': ['isAuthenticated', 'notYetImplemented'],
+		'update': ['isAuthenticated', 'notYetImplemented'],
+		'destroy': ['isAuthenticated', 'notYetImplemented'],
 	}
 };

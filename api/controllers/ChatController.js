@@ -93,12 +93,10 @@ module.exports = {
 
 	update: function (req, res) {
 		// TODO: chat update
-		return res.serverError('Not Yet Implemented');
 	},
 
 	destroy: function (req, res) {
 		// TODO: chat destroy
-		return res.serverError('Not Yet Implemented');
 	},
 
 	participants: function (req, res) {
