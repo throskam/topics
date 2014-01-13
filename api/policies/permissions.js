@@ -23,7 +23,7 @@ module.exports = function (req, res, next) {
 		})
 
 		.when('chat/participants', function (param, cb) {
-			check(findParticipant, { user: param('me').id, chat: param('chat') }, isMember, cb);
+			check(findParticipant, { user: param('me').id, chat: param('chat') }, isMetaMember, cb);
 		})
 
 		.when('chat/topics', function (param, cb) {
