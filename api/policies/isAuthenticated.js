@@ -1,5 +1,5 @@
 
 module.exports = function (req, res, next) {
 	if (req.session.authenticated) return next();
-	return res.forbidden('home:401.error');
+	return res.forbidden('api:401.error');
 };

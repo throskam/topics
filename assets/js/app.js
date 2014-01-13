@@ -25,7 +25,6 @@ var prepare = function ($q, Redirect, Chats, Request, Notification) {
 	}, function(err) {
 		if (err) {
 			Notification.error(err);
-			return Redirect.crash();
 		}
 		defer.resolve();
 	});

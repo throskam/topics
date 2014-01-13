@@ -22,11 +22,11 @@ module.exports = function () {
 				check(param(req), function (err, ok) {
 					if (err) return res.serverError(err);
 					if (ok) return next();
-					return res.forbidden('home:403.error');
+					return res.forbidden('api:403.error');
 				});
 			}
 
-			return res.forbidden('home:404.error');
+			return res.badRequest('api:404.error');
 		}
 	};
 }

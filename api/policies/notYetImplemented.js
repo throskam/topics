@@ -1,4 +1,4 @@
 
 module.exports = function (req, res, next) {
-	return res.forbidden('home:501.error');
+	return res.forbidden('api:501.error');
 };
