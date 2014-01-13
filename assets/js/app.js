@@ -4,7 +4,7 @@ var app = angular.module('App', ['ngRoute']);
 /********** R O U T E S **********/
 /*********************************/
 
-var prepare = function ($q, Redirect, Chats, Request) {
+var prepare = function ($q, Redirect, Chats, Request, Notification) {
 	var defer = $q.defer();
 
 	Chats.once(function (cb) {
@@ -23,7 +23,10 @@ var prepare = function ($q, Redirect, Chats, Request) {
 			});
 		});
 	}, function(err) {
-		if (err) return Redirect.crash();
+		if (err) {
+			Notification.error(err);
+			return Redirect.crash();
+		}
 		defer.resolve();
 	});
 
@@ -68,7 +71,7 @@ app.factory('Log', function () {
 	var log = function (func, level, data) { func(level + ' - ' + JSON.stringify(data)); }
 
 	return {
-		trace: function (data) { /*log(console.log, 'TRACE', data);*/ },
+		trace: function (data) { log(console.log, 'TRACE', data);},
 		notice: function (data) { log(console.info, 'NOTICE', data); },
 		warning: function (data) { log(console.warning, 'WARNING', data); },
 		error: function (data) { log(console.error, 'ERROR', data); }

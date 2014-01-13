@@ -5,12 +5,11 @@ module.exports = {
 	/*************************************************************************/
 
 	find: function (req, res) {
-		return res.json([]);
+		// TODO: participant find
 	},
 
 	create: function (req, res) {
 		// TODO: participant create
-		return res.serverError('Not Yet Implemented');
 	},
 
 	read: function (req, res) {
@@ -25,12 +24,10 @@ module.exports = {
 
 	update: function (req, res) {
 		// TODO: participant update
-		return res.serverError('Not Yet Implemented');
 	},
 
 	destroy: function (req, res) {
 		// TODO: participant destroy
-		return res.serverError('Not Yet Implemented');
 	},
 
 	join: function (req, res) {
