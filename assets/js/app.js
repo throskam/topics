@@ -747,7 +747,7 @@ app.factory('Topics', function (Provider, Request, Event, Log, Notification) {
 	return topics;
 });
 
-app.factory('Messages', function (Provider, Request, Event, Log, Notification, Participants, Recipients, Subjects) {
+app.factory('Messages', function (Provider, Request, Event, Log, Notification, PubSub, Participants, Recipients, Subjects) {
 	var messages = Provider('message', function (data, cb) {
 		data.recipients = [];
 		data.subjects = [];
@@ -815,6 +815,13 @@ app.factory('Messages', function (Provider, Request, Event, Log, Notification, P
 	Event.message.destroy(function (event) {
 		messages.remove(event.data.id, function (err, message) {
 			if (err) return Notification.error(err);
+		});
+	});
+
+	PubSub.subscribe('subject:destroyed', function (subject) {
+		messages.get(subject.message, function (err, message) {
+			if (err) return Notification.error(err);
+			_.remove(message.subjects, { id: subject.id });
 		});
 	});
 

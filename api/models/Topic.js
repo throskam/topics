@@ -43,17 +43,18 @@ module.exports = {
 		// TODO: publish update topic
 	},
 
-	publishDestroy: function (id) {
-		Socket.publish(Formatter.eventify('topic:destroy', { id: id }), this.subscribers(id));
-		Socket.obituary(this.room(id), this.subscribers(id));
+	publishDestroy: function (values) {
+		Socket.publish(Formatter.eventify('topic:destroy', values), this.subscribers(values.id));
+		Socket.obituary(this.room(values.id), this.subscribers(values.id));
 	},
 
 	beforeDestroy: function (criteria, cb) {
 		Topic.find(criteria).done(function (err, topics) {
 			async.each(topics, function (topic, next) {
 				Subject.findByTopic(topic.id).done(function (err, subjects) {
-					async.each(subjects, function (subject, next2) {
-						subject.destroy(next2);
+					async.each(subjects, function (subject, done) {
+						subject.destroy(done);
+						Subject.publishDestroy(subject);
 					}, next);
 				});
 			}, cb);

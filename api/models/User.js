@@ -55,7 +55,7 @@ module.exports = {
 		// TODO: publish update user
 	},
 
-	publishDestroy: function (id) {
+	publishDestroy: function (values) {
 		// TODO: publish destroy user
 	},
 

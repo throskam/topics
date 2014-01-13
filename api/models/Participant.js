@@ -107,7 +107,7 @@ module.exports = {
 		// TODO: obituary for all message, participant and topic of the chat
 	},
 
-	publishDestroy: function (id) {
+	publishDestroy: function (values) {
 		// TODO: publish destroy participant
 	},
 

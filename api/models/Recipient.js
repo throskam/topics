@@ -26,7 +26,7 @@ module.exports = {
 		// TODO: publish update recipient
 	},
 
-	publishDestroy: function (id) {
+	publishDestroy: function (values) {
 		// TODO: publish destroy recipient
 	}
 };

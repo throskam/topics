@@ -31,7 +31,7 @@ module.exports = {
 
 			topic.destroy(function (err) {
 				if (err) return serverError(err);
-				Topic.publishDestroy(topic.id);
+				Topic.publishDestroy(topic);
 				return res.json(topic);
 			});
 		});
