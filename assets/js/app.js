@@ -73,7 +73,7 @@ app.factory('Log', function () {
 	return {
 		trace: function (data) { log(console.log, 'TRACE', data);},
 		notice: function (data) { log(console.info, 'NOTICE', data); },
-		warning: function (data) { log(console.warning, 'WARNING', data); },
+		warning: function (data) { log(console.warn, 'WARNING', data); },
 		error: function (data) { log(console.error, 'ERROR', data); }
 	};
 });
@@ -1018,8 +1018,6 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 	/*********************************/
 
 	self.casual = function (err) {
-		self.errors = [];
-
 		if (err.status == 400) {
 			Notification.warning(err);
 			self.errors = err.validationErrors;
@@ -1053,6 +1051,7 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 				if (err) return self.casual(err);
 
 				self.newChat = {};
+				self.errors = [];
 				self.to('/');
 			});
 		});
@@ -1077,6 +1076,7 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 		Request.chat.invite(chat.id, newParticipant, function (err, participant) {
 			if (err) return self.casual(err);
 			$scope.newParticipant = "";
+			self.errors = [];
 		});
 	}
 
@@ -1134,6 +1134,7 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 		Request.message.create(newMessage, function (err, message) {
 			if (err) return self.casual(err);
 			$scope.newMessage = "";
+			self.errors = [];
 		});
 	}
 
@@ -1144,6 +1145,7 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 		Request.topic.create(newTopic, function (err, topic) {
 			if (err) return self.casual(err);
 			$scope.newTopic = {};
+			self.errors = [];
 		});
 	}
 
