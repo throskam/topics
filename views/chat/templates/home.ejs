@@ -53,10 +53,10 @@
 				<ul class="list-group">
 					<li class="list-group-item" ng-repeat="chat in app.chats | inviteChat | filter:{ title:search }">
 						<div class="row">
-							<div class="col-lg-10">
+							<div class="col-lg-8">
 								{{ chat.title }}
 							</div>
-							<div class="col-lg-2">
+							<div class="col-lg-4">
 								<div class="pull-right">
 									<button class="btn btn-xs btn-default" ng-click="app.join(chat.me)"><%= __('chat:accept.btn') %></button>
 									<button class="btn btn-xs btn-default" ng-click="app.leave(chat.me)"><i class="glyphicon glyphicon-remove"></i></button>

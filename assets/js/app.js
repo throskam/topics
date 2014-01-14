@@ -488,8 +488,7 @@ app.factory('Chats', function (Provider, Request, Event, Log, Notification, PubS
 		async.parallel([
 			function (done) {
 				Request.chat.participants(data.id, function (err, list) {
-					if (err) return done(err);
-					if (list.length < 1) return done();
+					if (err || list.length < 1) return done();
 
 					async.each(list, function (item, next) {
 						Participants.add(item, function (err, participant) {
@@ -505,8 +504,7 @@ app.factory('Chats', function (Provider, Request, Event, Log, Notification, PubS
 			},
 			function (done) {
 				Request.chat.topics(data.id, function (err, list) {
-					if (err) return done(err);
-					if (list.length < 1) return done();
+					if (err || list.length < 1) return done();
 
 					async.each(list, function (item, next) {
 						Topics.add(item, function (err, topic) {
@@ -522,8 +520,7 @@ app.factory('Chats', function (Provider, Request, Event, Log, Notification, PubS
 			},
 			function (done) {
 				Request.chat.messages(data.id, function (err, list) {
-					if (err) return done(err);
-					if (list.length < 1) return done();
+					if (err || list.length < 1) return done();
 
 					async.each(list, function (item, next) {
 						Messages.add(item, function (err, message) {
