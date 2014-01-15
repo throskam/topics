@@ -61,15 +61,15 @@ module.exports = function (req, res, next) {
 		})
 
 		.when('participant/promote', function (param, cb) {
-			check(findParticipant, param('participant'), function (participant, cb) {
-				check(findParticipant, {user: param('me').id }, function (me, ok) { return ok(null, me.isHigherThan(participant)); }, cb);
-			});
+			check(findParticipant, param('participant'), function (participant, done) {
+				check(findParticipant, {user: param('me').id }, function (me, ok) { return ok(null, me.isHigherThan(participant)); }, done);
+			}, cb);
 		})
 
 		.when('participant/revoke', function (param, cb) {
-			check(findParticipant, param('participant'), function (participant, cb) {
-				check(findParticipant, {user: param('me').id }, function (me, ok) { return ok(null, me.isHigherThan(participant)); }, cb);
-			});
+			check(findParticipant, param('participant'), function (participant, done) {
+				check(findParticipant, {user: param('me').id }, function (me, ok) { return ok(null, me.isHigherThan(participant)); }, done);
+			}, cb);
 		})
 
 		.when('topic/create', function (param, cb) {

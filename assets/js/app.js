@@ -989,7 +989,7 @@ app.filter('icebreakParticipant', function () {
 /***** C O N T R O L L E R S *****/
 /*********************************/
 
-app.controller('AppController', function ($scope, $routeParams, Redirect, Chats, Users, Request, Notification) {
+app.controller('AppController', function ($scope, $routeParams, Redirect, PubSub, Chats, Users, Request, Notification) {
 	/*********************************/
 	/******* V A R I A B L E S *******/
 	/*********************************/
@@ -1135,7 +1135,7 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 		newMessage.participant = chat.me.id;
 
 		Request.message.create(newMessage, function (err, message) {
-			if (err) return self.casual(err);
+			if (err) return self.critical(err);
 			$scope.newMessage = "";
 			self.errors = [];
 		});
