@@ -5,13 +5,10 @@ module.exports = {
 	/*************************************************************************/
 
 	find: function (req, res) {
-		return res.json([]);
+		// TODO: message find
 	},
 
 	create: function (req, res) {
-		// Set ownership
-		req.body.owner = req.session.user.id;
-
 		Message.create(req.body).done(function (err, message) {
 			if (err) return res.serverError(err);
 
@@ -22,17 +19,14 @@ module.exports = {
 
 	read: function (req, res) {
 		// TODO: message read
-		return res.serverError('Not Yet Implemented');
 	},
 
 	update: function (req, res) {
 		// TODO: message update
-		return res.serverError('Not Yet Implemented');
 	},
 
 	destroy: function (req, res) {
 		// TODO: message destroy
-		return res.serverError('Not Yet Implemented');
 	},
 
 	subjects: function (req, res) {

@@ -4,7 +4,7 @@ var app = angular.module('App', ['ngRoute']);
 /********** R O U T E S **********/
 /*********************************/
 
-var prepare = function ($q, Redirect, Chats, Request) {
+var prepare = function ($q, Redirect, Chats, Request, Notification) {
 	var defer = $q.defer();
 
 	Chats.once(function (cb) {
@@ -23,7 +23,9 @@ var prepare = function ($q, Redirect, Chats, Request) {
 			});
 		});
 	}, function(err) {
-		if (err) return Redirect.crash();
+		if (err) {
+			Notification.error(err);
+		}
 		defer.resolve();
 	});
 
@@ -65,15 +67,13 @@ app.config(function ($routeProvider) {
 /*********************************/
 
 app.factory('Log', function () {
-	var log = function (level, data) { console.log(level + ' - ' + JSON.stringify(data)); }
+	var log = function (func, level, data) { func(level + ' - ' + JSON.stringify(data)); }
 
 	return {
-		trace: function (data) { log('TRACE', data); },
-		info: function (data) { log('INFO', data); },
-		notice: function (data) { log('NOTICE', data); },
-		warning: function (data) { log('WARNING', data); },
-		alert: function (data) { log('ALERT', data); },
-		error: function (data) { log('ERROR', data); }
+		trace: function (data) { log(console.log, 'TRACE', data);},
+		notice: function (data) { log(console.info, 'NOTICE', data); },
+		warning: function (data) { log(console.warn, 'WARNING', data); },
+		error: function (data) { log(console.error, 'ERROR', data); }
 	};
 });
 
@@ -109,15 +109,64 @@ app.factory('Provider', function (Storage, PubSub) {
 	return function (name, construct, fetch) {
 		var storage = new Storage();
 
+		/**
+		 * NOTE: Provider has to perform only on fetch or one construct in order to ensure the unicity of object.
+		 *       Therefore, there is some control flow code...
+		 *       We keep track of the object status (missing, fetching, building, ready).
+		 *       And whenever a get request occurs, we either waits for the ready state or we perform the fetch/construt method.
+		 */
+
+		var queue = {};
+
+		// Wait the id to be ready and execute the cb.
+		var wait = function (id, cb) {
+			if (state(id) == 'ready') {
+				cb(null, storage.poll(id));
+			} else {
+				if (!queue[id]) queue[id] = [];
+				queue[id].push(cb);
+			}
+		}
+
+		// Signal that the id is ready and executes the queue.
+		var ready = function (id) {
+			for (var i in queue[id]) queue[id][i](null, storage.poll(id));
+			delete queue[id];
+			delete status[id];
+		}
+
+		var status = {};
+
+		// Change the id's state.
+		var stage = function (id, value) {
+			status[id] = value;
+		}
+
+		// Return the current id's status.
+		var state = function (id) {
+			if (storage.poll(id)) return 'ready';
+			if (status[id]) return status[id];
+			return 'missing';
+		}
+
 		var publish = function (event, data) { PubSub.publish(name + ':' + event, data); }
 
 		var add = function (data, cb) {
-			construct(data, function (err, object) {
-				if (err) return cb(err);
-				storage.push(object.id, object);
-				publish('created', object);
-				cb(null, object);
-			});
+			if (state(data.id) == 'missing' || state(data.id) == 'fetching') {
+				stage(data.id, 'building');
+
+				construct(data, function (err, object) {
+					if (err) return cb(err);
+
+					storage.push(object.id, object);
+					publish('created', object);
+					cb(null, object);
+
+					ready(data.id);
+				});
+			} else {
+				wait(data.id, cb);
+			}
 		};
 
 		var modify = function (data, cb) {
@@ -132,25 +181,35 @@ app.factory('Provider', function (Storage, PubSub) {
 		var remove = function (id, cb) {
 			var o = storage.poll(id);
 			storage.pop(id);
-			publish('destroyed', o);
+			if (o) publish('destroyed', o);
 			cb(null, o);
 		};
 
-		var by = function (id, cb) {
-			var object = storage.poll(id);
-			if (object) return cb(null, object);
+		var get = function (id, cb) {
+			if (state(id) == 'missing') {
+				// Even if the id is not there, we are working on it
+				stage(id, 'fetching');
 
-			fetch(id, function (err, data) {
-				if (err) return cb(err);
-				add(data, cb);
-			});
+				fetch(id, function (err, data) {
+					if (err) return cb(err);
+					add(data, cb);
+				});
+			} else {
+				wait(id, cb);
+			}
+		};
+
+		var where = function (criteria, cb) {
+			var objects = _.where(storage.pack(), criteria);
+			return cb(null, (objects ? objects : null));
 		};
 
 		return {
 			add: add,
 			modify: modify,
 			remove: remove,
-			by: by,
+			get: get,
+			where: where,
 			any: function (cb) { cb(null, storage.pack()); },
 			exists: function (id) { return storage.poll(id) ? true : false; },
 			once: function (func, cb) { var self = this; func(function (err) { if (err) return cb(err); self.once = function (func, cb) { cb(); }; cb(); }); }
@@ -283,8 +342,8 @@ app.factory('Request', function (Socket) {
 			leave: function (id, cb) { Socket.put('/api/participant/' + id + '/leave', {}, cb); },
 			connect: function (id, cb) { Socket.put('/api/participant/' + id + '/connect', {}, cb); },
 			disconnect: function (id, cb) { Socket.put('/api/participant/' + id + '/disconnect', {}, cb); },
-			revoke: function (id, cb) { Socket.put('/api/participant/' + id + '/revoke', {}, cb); },
-			promote: function (id, type, cb) { Socket.put('/api/participant/' + id + '/promote', { type: type }, cb); }
+			promote: function (id, type, cb) { Socket.put('/api/participant/' + id + '/promote', { type: type }, cb); },
+			revoke: function (id, cb) { Socket.put('/api/participant/' + id + '/revoke', {}, cb); }
 		},
 
 		topic: {
@@ -390,7 +449,7 @@ app.factory('Users', function (Provider, Request, Event, Log, Notification) {
 	});
 
 	users['me'] = function (cb) {
-		if (me) return users.by(me, cb);
+		if (me) return users.get(me, cb);
 
 		Request.user.me(function (err, data) {
 			if (err) return cb(err);
@@ -412,7 +471,7 @@ app.factory('Users', function (Provider, Request, Event, Log, Notification) {
 	});
 
 	Event.user.destroy(function (event) {
-		users.remove(event.data, function (err, user) {
+		users.remove(event.data.id, function (err, user) {
 			if (err) return Notification.error(err);
 		});
 	});
@@ -429,8 +488,7 @@ app.factory('Chats', function (Provider, Request, Event, Log, Notification, PubS
 		async.parallel([
 			function (done) {
 				Request.chat.participants(data.id, function (err, list) {
-					if (err) return done(err);
-					if (list.length < 1) return done();
+					if (err || list.length < 1) return done();
 
 					async.each(list, function (item, next) {
 						Participants.add(item, function (err, participant) {
@@ -446,8 +504,7 @@ app.factory('Chats', function (Provider, Request, Event, Log, Notification, PubS
 			},
 			function (done) {
 				Request.chat.topics(data.id, function (err, list) {
-					if (err) return done(err);
-					if (list.length < 1) return done();
+					if (err || list.length < 1) return done();
 
 					async.each(list, function (item, next) {
 						Topics.add(item, function (err, topic) {
@@ -463,8 +520,7 @@ app.factory('Chats', function (Provider, Request, Event, Log, Notification, PubS
 			},
 			function (done) {
 				Request.chat.messages(data.id, function (err, list) {
-					if (err) return done(err);
-					if (list.length < 1) return done();
+					if (err || list.length < 1) return done();
 
 					async.each(list, function (item, next) {
 						Messages.add(item, function (err, message) {
@@ -487,9 +543,9 @@ app.factory('Chats', function (Provider, Request, Event, Log, Notification, PubS
 					return participant.user.id == me.id;
 				});
 
-				Users.by(data.owner, function (err, user) {
+				Users.get(data.user, function (err, user) {
 					if (err) return cb(err);
-					data.owner = user;
+					data.user = user;
 					cb(null, data);
 				});
 			});
@@ -511,44 +567,80 @@ app.factory('Chats', function (Provider, Request, Event, Log, Notification, PubS
 	});
 
 	Event.chat.destroy(function (event) {
-		chats.remove(event.data, function (err, chat) {
+		chats.remove(event.data.id, function (err, chat) {
 			if (err) return Notification.error(err);
 		});
 	});
 
 	Event.chat.icebreak(function (event) {
-		Participants.add(event.data, function (err, participant) {
+		chats.get(event.data.chat, function (err, chat) {
 			if (err) return Notification.error(err);
+
+			Participants.add(event.data, function (err, participant) {
+				if (err) return Notification.error(err);
+			});
 		});
 	});
 
 	Event.chat.invite(function (event) {
-		Participants.add(event.data, function (err, participant) {
+		chats.get(event.data.chat, function (err, chat) {
 			if (err) return Notification.error(err);
+
+			Participants.add(event.data, function (err, participant) {
+				if (err) return Notification.error(err);
+			});
 		});
 	});
 
 	PubSub.subscribe('participant:created', function (participant) {
-		if (!chats.exists(participant.chat)) return;
-		chats.by(participant.chat, function (err, chat) {
+		chats.get(participant.chat, function (err, chat) {
 			if (err) return Notification.error(err);
+
+			// If the chat has never been loaded, the fetch will might already retrieve this participant.
+			if (_.find(chat.participants, { id: participant.id })) return;
+
 			chat.participants.push(participant);
 		});
 	});
 
-	PubSub.subscribe('message:created', function (message) {
-		if (!chats.exists(message.chat)) return;
-		chats.by(message.chat, function (err, chat) {
+	PubSub.subscribe('participant:destroyed', function (participant) {
+		chats.get(participant.chat, function (err, chat) {
 			if (err) return Notification.error(err);
+			_.remove(chat.participants, { id: participant.id });
+			if (chat.me.id == participant.id) {
+				chats.remove(participant.chat, function (err, chat) {
+					if (err) return Notification.error(err);
+				});
+			}
+		});
+	});
+
+	PubSub.subscribe('message:created', function (message) {
+		chats.get(message.chat, function (err, chat) {
+			if (err) return Notification.error(err);
+
+			// If the chat has never been loaded, the fetch will might already retrieve this message.
+			if (_.find(chat.messages, { id: message.id })) return;
+
 			chat.messages.push(message);
 		});
 	});
 
 	PubSub.subscribe('topic:created', function (topic) {
-		if (!chats.exists(topic.chat)) return;
-		chats.by(topic.chat, function (err, chat) {
+		chats.get(topic.chat, function (err, chat) {
 			if (err) return Notification.error(err);
+
+			// If the chat has never been loaded, the fetch will might already retrieve this topic.
+			if (_.find(chat.topics, { id: topic.id })) return;
+
 			chat.topics.push(topic);
+		});
+	});
+
+	PubSub.subscribe('topic:destroyed', function (topic) {
+		chats.get(topic.chat, function (err, chat) {
+			if (err) return Notification.error(err);
+			_.remove(chat.topics, { id: topic.id });
 		});
 	});
 
@@ -557,7 +649,7 @@ app.factory('Chats', function (Provider, Request, Event, Log, Notification, PubS
 
 app.factory('Participants', function (Provider, Request, Event, Log, Notification, Users) {
 	var participants = Provider('participant', function (data, cb) {
-		Users.by(data.user, function (err, user) {
+		Users.get(data.user, function (err, user) {
 			if (err) return cb(err);
 			data.user = user;
 			cb(null, data);
@@ -579,7 +671,7 @@ app.factory('Participants', function (Provider, Request, Event, Log, Notificatio
 	});
 
 	Event.participant.destroy(function (event) {
-		participants.destroy(event.data, function (err, participant) {
+		participants.remove(event.data.id, function (err, participant) {
 			if (err) return Notification.error(err);
 		});
 	});
@@ -591,7 +683,7 @@ app.factory('Participants', function (Provider, Request, Event, Log, Notificatio
 	});
 
 	Event.participant.leave(function (event) {
-		participants.modify(event.data, function (err, participant) {
+		participants.remove(event.data.id, function (err, participant) {
 			if (err) return Notification.error(err);
 		});
 	});
@@ -608,14 +700,14 @@ app.factory('Participants', function (Provider, Request, Event, Log, Notificatio
 		});
 	});
 
-	Event.participant.revoke(function (event) {
-		participants.remove(event.data, function (err, participant) {
+	Event.participant.promote(function (event) {
+		participants.modify(event.data, function (err, participant) {
 			if (err) return Notification.error(err);
 		});
 	});
 
-	Event.participant.promote(function (event) {
-		participants.modify(event.data, function (err, participant) {
+	Event.participant.revoke(function (event) {
+		participants.remove(event.data.id, function (err, participant) {
 			if (err) return Notification.error(err);
 		});
 	});
@@ -643,7 +735,7 @@ app.factory('Topics', function (Provider, Request, Event, Log, Notification) {
 	});
 
 	Event.topic.destroy(function (event) {
-		topics.remove(event.data, function (err, topic) {
+		topics.remove(event.data.id, function (err, topic) {
 			if (err) return Notification.error(err);
 		});
 	});
@@ -651,7 +743,7 @@ app.factory('Topics', function (Provider, Request, Event, Log, Notification) {
 	return topics;
 });
 
-app.factory('Messages', function (Provider, Request, Event, Log, Notification, Users, Recipients, Subjects) {
+app.factory('Messages', function (Provider, Request, Event, Log, Notification, PubSub, Participants, Recipients, Subjects) {
 	var messages = Provider('message', function (data, cb) {
 		data.recipients = [];
 		data.subjects = [];
@@ -694,9 +786,9 @@ app.factory('Messages', function (Provider, Request, Event, Log, Notification, U
 		],
 		function (err, results) {
 			if (err) return cb(err);
-			Users.by(data.owner, function (err, user) {
+			Participants.get(data.participant, function (err, user) {
 				if (err) return cb(err);
-				data.owner = user;
+				data.participant = user;
 				cb(null, data);
 			});
 		});
@@ -717,19 +809,26 @@ app.factory('Messages', function (Provider, Request, Event, Log, Notification, U
 	});
 
 	Event.message.destroy(function (event) {
-		messages.remove(event.data, function (err, message) {
+		messages.remove(event.data.id, function (err, message) {
 			if (err) return Notification.error(err);
+		});
+	});
+
+	PubSub.subscribe('subject:destroyed', function (subject) {
+		messages.get(subject.message, function (err, message) {
+			if (err) return Notification.error(err);
+			_.remove(message.subjects, { id: subject.id });
 		});
 	});
 
 	return messages;
 });
 
-app.factory('Recipients', function (Provider, Request, Event, Log, Notification, Users) {
+app.factory('Recipients', function (Provider, Request, Event, Log, Notification, Participants) {
 	var recipients = Provider('recipient', function (data, cb) {
-		Users.by(data.user, function (err, user) {
+		Participants.get(data.participant, function (err, participant) {
 			if (err) return cb(err);
-			data.user = user;
+			data.participant = participant;
 			cb(null, data);
 		});
 	}, function (id, cb) {
@@ -749,7 +848,7 @@ app.factory('Recipients', function (Provider, Request, Event, Log, Notification,
 	});
 
 	Event.recipient.destroy(function (event) {
-		recipients.remove(event.data, function (err, recipient) {
+		recipients.remove(event.data.id, function (err, recipient) {
 			if (err) return Notification.error(err);
 		});
 	});
@@ -759,7 +858,7 @@ app.factory('Recipients', function (Provider, Request, Event, Log, Notification,
 
 app.factory('Subjects', function (Provider, Request, Event, Log, Notification, Topics) {
 	var subjects = Provider('subject', function (data, cb) {
-		Topics.by(data.topic, function (err, topic) {
+		Topics.get(data.topic, function (err, topic) {
 			if (err) return cb(err);
 			data.topic = topic;
 			cb(null, data);
@@ -781,7 +880,7 @@ app.factory('Subjects', function (Provider, Request, Event, Log, Notification, T
 	});
 
 	Event.subject.destroy(function (event) {
-		subjects.remove(event.data, function (err, subject) {
+		subjects.remove(event.data.id, function (err, subject) {
 			if (err) return Notification.error(err);
 		});
 	});
@@ -795,7 +894,10 @@ app.factory('Subjects', function (Provider, Request, Event, Log, Notification, T
 
 app.directive('message', function () {
 	return {
-		templateUrl: '/chat/templates/partials/message',
+		scope: {
+			message: '='
+		},
+		templateUrl: '/chat/templates/partials/message'
 	}
 });
 
@@ -813,6 +915,28 @@ app.directive('date', function ($timeout) {
 			element.attr('title', moment(scope.time).format(scope.format))
 		}
 	}
+});
+
+app.directive('participant', function (Chats,Participants) {
+	return {
+		restrict: 'A',
+		templateUrl: '/chat/templates/partials/participant',
+		scope: {
+			participant: '='
+		},
+		link: function (scope, element, attrs) {}
+	};
+});
+
+app.directive('topic', function () {
+	return {
+		restrict: 'A',
+		templateUrl: '/chat/templates/partials/topic',
+		scope: {
+			topic: '='
+		},
+		link: function (scope, element, attrs) {}
+	};
 });
 
 /*********************************/
@@ -845,7 +969,7 @@ app.filter('connectedChat', function () {
 
 app.filter('legitParticipant', function () {
 	return function (items) {
-		return _.where(items, function (participant) { return participant.type != 'invite' && participant.type != 'icebreak'; });
+		return _.where(items, function (participant) { return !_.contains(['revoke', 'part','icebreak', 'invite'], participant.type); });
 	};
 });
 
@@ -865,7 +989,7 @@ app.filter('icebreakParticipant', function () {
 /***** C O N T R O L L E R S *****/
 /*********************************/
 
-app.controller('AppController', function ($scope, $routeParams, Redirect, Chats, Users, Request, Notification) {
+app.controller('AppController', function ($scope, $routeParams, Redirect, PubSub, Chats, Users, Request, Notification) {
 	/*********************************/
 	/******* V A R I A B L E S *******/
 	/*********************************/
@@ -883,13 +1007,13 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 	self.errors = {};
 
 	// types
-	self.types = ['icebreak', 'invite', 'mute', 'voice', 'moderator', 'admin', 'creator'];
+	self.types = ['revoke', 'part', 'icebreak', 'invite', 'mute', 'voice', 'moderator', 'admin', 'creator'];
 
 	/*********************************/
 	/********* F I L T E R S *********/
 	/*********************************/
 
-	self.isStaff = function () { return _.indexOf(self.types, 'moderator') <= _.indexOf(self.types, self.chat.me.type); }
+	self.isStaff = function () { if(_.indexOf(self.types, 'moderator') > _.indexOf(self.types, self.chat.me.type)) return $scope.settings = false; return true; }
 	self.isSuperiorTo = function (participant) { return _.indexOf(self.types, participant.type) < _.indexOf(self.types, self.chat.me.type); }
 
 	/*********************************/
@@ -897,8 +1021,6 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 	/*********************************/
 
 	self.casual = function (err) {
-		self.errors = [];
-
 		if (err.status == 400) {
 			Notification.warning(err);
 			self.errors = err.validationErrors;
@@ -914,30 +1036,42 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 
 		else {
 			Notification.error(err);
-			return true;
 		}
-
-		return false;
 	}
 
 	self.critical = function (err) {
-		if (self.casual(err)) Redirect.crash();
+		self.casual(err);
+		Redirect.crash();
 	}
 
 	self.create = function (newChat) {
-		Request.chat.create(newChat, function (err, chat) {
-			if (err) return self.casual(err);
+		Users.me(function (err, me) {
+			if (err) return self.critical(err);
 
-			self.newChat = {};
-			self.to('/');
+			newChat.user = me.id;
+
+			Request.chat.create(newChat, function (err, chat) {
+				if (err) return self.casual(err);
+
+				self.newChat = {};
+				self.errors = [];
+				self.to('/');
+			});
 		});
 	}
 
 	self.icebreak = function (slug) {
 		Request.chat.icebreak(slug, function (err, participant) {
-			if (err) return self.casual(err);
-
-			self.to('/');
+			if (err) return self.critical(err);
+			if (participant.type == 'voice') {
+				Chats.get(participant.chat, function (err, chat) {
+					if (err) return self.critical(err);
+					self.chat = chat;
+					self.connect(self.chat.me);
+				});
+			} else {
+				self.to('/');
+			}
 		});
 	}
 
@@ -945,6 +1079,7 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 		Request.chat.invite(chat.id, newParticipant, function (err, participant) {
 			if (err) return self.casual(err);
 			$scope.newParticipant = "";
+			self.errors = [];
 		});
 	}
 
@@ -954,31 +1089,29 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 		});
 	}
 
-	self.join = function (chat) {
-		Request.participant.join(chat.me.id, function (err, participant) {
+	self.join = function (participant) {
+		Request.participant.join(participant.id, function (err) {
 			if (err) return self.casual(err);
 		});
 	}
 
-	self.leave = function (chat) {
-		Request.participant.leave(chat.me.id, function (err, participant) {
+	self.leave = function (participant) {
+		Request.participant.leave(participant.id, function (err) {
 			if (err) return self.casual(err);
-			Chats.remove(participant.chat, function (err, chat) {
-				self.toLastChat();
-			});
+			self.toLastChat();
 		});
 	}
 
-	self.connect = function (chat) {
-		if (chat.me.connected) return;
+	self.connect = function (participant) {
+		if (participant.connected) return;
 
-		Request.participant.connect(chat.me.id, function (err, participant) {
+		Request.participant.connect(participant.id, function (err) {
 			if (err) return self.casual(err);
 		});
 	}
 
-	self.disconnect = function (chat) {
-		Request.participant.disconnect(chat.me.id, function (err, disconnect) {
+	self.disconnect = function (participant) {
+		Request.participant.disconnect(participant.id, function (err) {
 			if (err) return self.casual(err);
 
 			self.toLastChat();
@@ -986,55 +1119,44 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 	}
 
 	self.revoke = function (participant) {
-		Request.participant.revoke(participant.id, function (err, participant) {
+		Request.participant.revoke(participant.id, function (err) {
 			if (err) return self.casual(err);
-
-			Users.me(function (err, me) {
-				if (err) return self.casual(err);
-
-				if (me.id == participant.user.id) {
-					self.to('/');
-				}
-			});
-
 		});
 	}
 
 	self.promote = function (participant, type) {
-		Request.chat.promote(participant.id, type, function (err, participant) {
+		Request.participant.promote(participant.id, type, function (err, participant) {
 			if (err) return self.casual(err);
 		});
 	}
 
 	self.send = function (chat, newMessage) {
 		newMessage.chat = chat.id;
+		newMessage.participant = chat.me.id;
 
 		Request.message.create(newMessage, function (err, message) {
-			if (err) return self.casual(err);
+			if (err) return self.critical(err);
 			$scope.newMessage = "";
+			self.errors = [];
 		});
 	}
 
 	self.topic = function (chat, newTopic) {
+		newTopic.chat = chat.id;
+		newTopic.participant = chat.me.id;
 
-		newTopic.owner = Users.me(function (err, me) {
+		Request.topic.create(newTopic, function (err, topic) {
 			if (err) return self.casual(err);
-
-			newTopic.chat = chat.id;
-			newTopic.owner = me.id;
-
-			Request.topic.create(newTopic, function (err, topic) {
-				if (err) return self.casual(err);
-				$scope.newTopic = {};
-			});
+			$scope.newTopic = {};
+			self.errors = [];
 		});
 	}
 
-	/*self.untopic = function (topic) {
+	self.untopic = function (topic) {
 		Request.topic.destroy(topic.id, function (err, topic) {
 			if (err) return self.casual(err);
 		});
-	}*/
+	}
 
 	self.to = function (to) { Redirect.to(to); }
 
@@ -1052,7 +1174,7 @@ app.controller('AppController', function ($scope, $routeParams, Redirect, Chats,
 		if (err) return self.critical(err);
 		self.chats = chats;
 		if ($routeParams.slug) {
-			if (self.chat = _.find(self.chats, {slug: $routeParams.slug})) return self.connect(self.chat);
+			if (self.chat = _.find(self.chats, {slug: $routeParams.slug})) return self.connect(self.chat.me);
 			self.icebreak($routeParams.slug);
 		}
 	});

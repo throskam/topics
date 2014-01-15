@@ -28,7 +28,31 @@ module.exports = {
 		},
 
 		types : function () {
-			return ['icebreak', 'invite', 'member', 'voice', 'moderator', 'admin', 'creator'];
+			return ['revoke', 'part', 'icebreak', 'invite', 'mute', 'voice', 'moderator', 'admin', 'creator'];
+		},
+
+		isRevoked: function () {
+			return this.type == 'revoke';
+		},
+
+		isIcebreak: function () {
+			return this.type == 'icebreak';
+		},
+
+		isInvite: function () {
+			return this.type == 'invite';
+		},
+
+		isMetaMember: function () {
+			return this.isHigherThanOrEqual('icebreak');
+		},
+
+		isMember: function () {
+			return this.isHigherThanOrEqual('mute');
+		},
+
+		isStaff: function () {
+			return this.isHigherThanOrEqual('moderator');
 		},
 
 		isHigherThan: function (type) {
@@ -48,29 +72,49 @@ module.exports = {
 		// TODO: publish create participant
 	},
 
+	publishJoin: function (values) {
+		// The participant should be introduced to the concerned chat.
+		Socket.introduce(Chat.room(values.chat), Socket.userToSockets(values.user, Chat.subscribers()));
+
+		// The participant is introduced to the chat
+		Socket.introduce(this.room(values.id), Chat.subscribers(values.chat));
+		Socket.publish(Formatter.eventify('participant:join', values), this.subscribers(values.id));
+	},
+
 	publishUpdate: function (id, changes) {
 		// TODO: publish update participant
 	},
 
-	publishDestroy: function (id) {
+	publishConnect: function (values) { Socket.publish(Formatter.eventify('participant:connect', values), this.subscribers(values.id)); },
+	publishDisconnect: function (values) { Socket.publish(Formatter.eventify('participant:disconnect', values), this.subscribers(values.id)); },
+	publishPromote: function (values) { Socket.publish(Formatter.eventify('participant:promote', values), this.subscribers(values.id)); },
+
+	publishRevoke: function (values) {
+		Socket.publish(Formatter.eventify('participant:revoke', values), this.subscribers(values.id));
+		Socket.obituary(this.room(values.id), this.subscribers(values.id));
+
+		// The participant should be unsubscribed to the concerned chat and any other content of it
+		Socket.obituary(Chat.room(values.chat), Socket.userToSockets(values.user, Chat.subscribers(values.chat)));
+		// TODO: obituary for all message, participant and topic of the chat
+	},
+
+	publishLeave: function (values) {
+		Socket.publish(Formatter.eventify('participant:leave', values), this.subscribers(values.id));
+		Socket.obituary(this.room(values.id), this.subscribers(values.id));
+
+		// The participant should be unsubscribed to the concerned chat and any other content of it
+		Socket.obituary(Chat.room(values.chat), Socket.userToSockets(values.user, Chat.subscribers(values.chat)));
+		// TODO: obituary for all message, participant and topic of the chat
+	},
+
+	publishDestroy: function (values) {
 		// TODO: publish destroy participant
 	},
 
-	publishJoin: function (participant) {
-		// The participant should be subscribed to the concerned chat.
-		Socket.introduce(Chat.room(participant.chat), Socket.userToSockets(participant.user, Chat.subscribers()));
-		Socket.publish(Formatter.eventify('participant:join', participant), this.subscribers(participant.id));
-	},
-
-	publishLeave: function (participant) {
-		Socket.publish(Formatter.eventify('participant:leave', participant), this.subscribers(participant.id));
-		// The participant should be unsubscribed to the concerned chat.
-		Socket.obituary(Chat.room(participant.chat), Socket.userToSockets(participant.user, Chat.subscribers(participant.chat)));
-	},
-
-	publishConnect: function (participant) { Socket.publish(Formatter.eventify('participant:connect', participant), this.subscribers(participant.id)); },
-	publishDisconnect: function (participant) { Socket.publish(Formatter.eventify('participant:disconnect', participant), this.subscribers(participant.id)); },
-	publishPromote: function (participant) { Socket.publish(Formatter.eventify('participant:promote', participant), this.subscribers(participant.id)); },
+	beforeDestroy: function (criteria, cb) {
+		// TODO: remove associated recipient
+		cb();
+	}
 };
 
 

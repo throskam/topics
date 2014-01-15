@@ -17,17 +17,17 @@
 			</div>
 			<div class="col-lg-3">
 				<div class="pull-right">
-					<div class="btn-group">
-						<button class="btn btn-sm btn-primary" ng-click="settings = !settings" ng-class="{ active: settings }" ng-show="app.isStaff()">
-							<i class="glyphicon glyphicon-cog"></i>
-						</button>
-						<button class="btn btn-sm btn-warning" ng-click="app.disconnect(app.chat);">
-							<i class="glyphicon glyphicon-off"></i>
-						</button>
-						<button class="btn btn-sm btn-danger" ng-click="app.leave(app.chat);">
-							<i class="glyphicon glyphicon-remove"></i>
-						</button>
+
+					<div class="input-group">
+						<input type="text" class="form-control input-sm" ng-model="search">
+						<span class="input-group-btn">
+								<button class="btn btn-sm btn-primary" ng-click="settings = !settings" ng-class="{ active: settings }" ng-show="app.isStaff()"><i class="glyphicon glyphicon-cog"></i></button>
+								<button class="btn btn-sm btn-warning" ng-click="app.disconnect(app.chat.me);"><i class="glyphicon glyphicon-off"></i></button>
+								<button class="btn btn-sm btn-danger" ng-click="app.leave(app.chat.me);"><i class="glyphicon glyphicon-remove"></i></button>
+						</span>
 					</div>
+
+
 				</div>
 			</div>
 		</div>
@@ -38,22 +38,14 @@
 
 			<div class="col-lg-2">
 				<div class="participants">
-					<div ng-repeat="participant in app.chat.participants | legitParticipant | filter:{ connected: true } | orderBy:username">
-						<span class="label label-success" ng-hide="!participant.connected"><i class="glyphicon glyphicon-cloud"></i></span>
-						<a href user="{{ participant.user }}">{{ participant.user.username }}</a>
-					</div>
-
-					<div ng-repeat="participant in app.chat.participants | legitParticipant | filter:{ connected: false } | orderBy:username">
-						<span class="label label-default" ng-hide="participant.connected"><i class="glyphicon glyphicon-cloud"></i></span>
-						{{ participant.user.username }}
-					</div>
+					<div ng-repeat="participant in app.chat.participants | legitParticipant | orderBy:username" participant="participant"></div>
 				</div>
 			</div>
 
 			<div class="col-lg-8">
-				<div ng-repeat="message in app.chat.messages" message="{{ message }}"></div>
+				<div ng-repeat="message in app.chat.messages | filter:{ content:search } " message="message"></div>
 
-				<form ng-hide="app.chat.me.type == 'muted'">
+				<form ng-hide="app.chat.me.type == 'mute'">
 					<div class="form-group {{ app.errors.content.length > 0 ? 'has-error' : '' }}" >
 						<div class="input-group">
 							<input type="text" class="form-control input-sm" ng-model="newMessage.content" />
@@ -68,13 +60,13 @@
 
 			<div class="col-lg-2">
 				<div class="topics">
-					<div ng-repeat="topic in app.chat.topics"> {{ topic.slug }} </div>
+					<div ng-repeat="topic in app.chat.topics" topic="topic"></div>
 				</div>
 			</div>
 		</div>
 	</div>
 
-	<div class="panel-body" ng-show="settings">
+	<div class="panel-body" ng-show="settings && app.isStaff()">
 
 		<div class="row">
 			<div class="col-lg-10 col-lg-offset-1">
@@ -84,12 +76,12 @@
 						<ul class="list-group">
 							<li class="list-group-item" ng-repeat="topic in app.chat.topics">
 								<div class="row">
-									<div class="col-lg-10"> {{ topic.slug }} </div>
+									<div class="col-lg-10"><span topic="topic"></span></div>
 									<div class="col-lg-2">
 										<div class="pull-right">
-											<!-- <div class="btn-group">
+											<div class="btn-group">
 												<button class="btn btn-xs btn-default" ng-click="app.untopic(topic);"><i class="glyphicon glyphicon-remove"></i></button>
-											</div> -->
+											</div>
 										</div>
 									</div>
 								</div>
@@ -206,7 +198,7 @@
 						</ul>
 
 						<form>
-							<div class="form-group {{ app.errors.length > 0 ? 'has-error' : '' }}" >
+							<div class="form-group {{ app.errors.errors.length > 0 ? 'has-error' : '' }}" >
 								<div class="input-group">
 									<input type="text" class="form-control input-sm" ng-model="newParticipant" />
 									<span class="input-group-btn">

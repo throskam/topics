@@ -19,7 +19,7 @@ module.exports = {
 			function (cb) { Chat.count().done(function (err, count) { cb(err, count); }); },
 			function (cb) { Message.count().done(function (err, count) { cb(err, count); }); },
 		], function (err, results) {
-			if (err) return res.serverError(err, req, res);
+			if (err) return res.serverError(err);
 
 			var stats = {};
 

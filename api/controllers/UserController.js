@@ -34,12 +34,11 @@ module.exports = {
 	/*************************************************************************/
 
 	find: function (req, res) {
-		return res.json([]);
+		// TODO: friend list
 	},
 
 	create: function (req, res) {
 		// TODO: user create
-		return res.serverError('Not Yet Implemented');
 	},
 
 	read: function (req, res) {
@@ -54,12 +53,10 @@ module.exports = {
 
 	update: function (req, res) {
 		// TODO: user update
-		return res.serverError('Not Yet Implemented');
 	},
 
 	destroy: function (req, res) {
 		// TODO: user destroy
-		return res.serverError('Not Yet Implemented');
 	},
 
 	me: function (req, res) {

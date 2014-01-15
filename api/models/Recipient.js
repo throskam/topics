@@ -8,7 +8,7 @@ module.exports = {
 			required: true
 		},
 
-		user: {
+		participant: {
 			type: 'integer',
 			required: true
 		}
@@ -26,8 +26,7 @@ module.exports = {
 		// TODO: publish update recipient
 	},
 
-	publishDestroy: function (id) {
+	publishDestroy: function (values) {
 		// TODO: publish destroy recipient
-	},
-
+	}
 };

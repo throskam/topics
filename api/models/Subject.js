@@ -26,8 +26,9 @@ module.exports = {
 		// TODO: publish update subject
 	},
 
-	publishDestroy: function (id) {
-		// TODO: publish destroy subject
+	publishDestroy: function (values) {
+		Socket.publish(Formatter.eventify('subject:destroy', values), this.subscribers(values.id));
+		Socket.obituary(this.room(values.id), this.subscribers(values.id));
 	},
 
 };

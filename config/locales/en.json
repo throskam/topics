@@ -81,12 +81,18 @@
 	"auth:username-or-password-incorrect.error": "Username or password incorrect.",
 	"auth:username-duplicate.error": "Username already taken.",
 	"auth:password-confirmation.error": "The confirmation does not match the password.",
-	"home:403.error": "You must be authenticated to perform this action.",
-	"home:500.error": "Snap ! Something went wrong :(",
+	"home:snap.error": "Snap ! Something went wrong :(",
 	"home:user-not-found.error": "The user does not exist.",
 	"home:chat-not-found.error": "The chat does not exist.",
 	"home:participant-not-found.error": "The participant does not exist.",
 	"chat:participant-duplicate.error": "The user is already a participant in this chat.",
 	"chat:icebreak-duplicate.error": "The user is already trying to break the ice in this chat.",
-	"chat:participant-not-invited.error": "The user is not invited to this chat, maybe try to break the ice ?"
+	"chat:participant-not-invited.error": "The user is not invited to this chat, maybe try to break the ice ?",
+	"chat:icebreak-revoke.error": "The user has been revoked and therefore cannot make an icebreak to the same chat.",
+	"api:400.error": "The request cannot be fulfilled due to bad syntax.",
+	"api:401.error": "The request require authentication.",
+	"api:403.error": "The request was a valid request, but the server is refusing to respond to it.",
+	"api:404.error": "The requested resource could not be found.",
+	"api:500.error": "Internal Server Error.",
+	"api:501.error": "Not yet implemented."
 }
